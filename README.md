@@ -4,15 +4,17 @@
 please reference http://blog.csdn.net/lanergaming/article/details/48689841
 
 ## vs build jni configre
-please reference http://blog.csdn.net/mingjava/article/details/180946
+please reference http://blog.csdn.net/mingjava/article/details/180946  
+when you build the project, please do not forget to select the **x64** platform
 
 ## make the jni.h file to be find in vs2015
 in vs->project->c/c++ ->general->additional include library add：  
 **%JAVA_HOME%/include** & **%JAVA_HOME%/include/win32**
 
 ## if javah command can not find the class file
-please reference  http://blog.csdn.net/mingjava/article/details/180946  
-when you build the project, please do not forget to select the **x64** platform
+please reference  http://stackoverflow.com/questions/3451378/how-to-run-javah-from-eclipse
+simply use the command `javah -classpath /path/to/project/classes com.mycompany.MyClass`, the case is to add the package name before the class name
+
 
 ## make the jni work with the tomcat
 please reference http://myswirl.blog.163.com/blog/static/51318642201145104516632/  
