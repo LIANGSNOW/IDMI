@@ -12,7 +12,7 @@ in vs->project->c/c++ ->general->additional include library add：
 **%JAVA_HOME%/include** & **%JAVA_HOME%/include/win32**
 
 ## if javah command can not find the class file
-please reference  http://stackoverflow.com/questions/3451378/how-to-run-javah-from-eclipse
+please reference  http://stackoverflow.com/questions/3451378/how-to-run-javah-from-eclipse  
 simply use the command `javah -classpath /path/to/project/classes com.mycompany.MyClass`, the case is to add the package name before the class name
 
 
