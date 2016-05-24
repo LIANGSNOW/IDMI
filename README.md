@@ -1,5 +1,13 @@
 # server & jni configuration
 
+## environment
+| app | version|
+|-----|--------|
+|tomcat| 7.0.69|
+|eclipse |eclipse for java ee|
+|visual studio| vs 2015 community|
+|java | jdk 1.8.0_73|
+
 ## vs2015 & opencv3.1 configure
 please reference http://blog.csdn.net/lanergaming/article/details/48689841
 
