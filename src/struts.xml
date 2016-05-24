@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+    "http://struts.apache.org/dtds/struts-2.3.dtd">
+ 
+<struts>
+
+	<!-- about the picture size-->
+   	
+   <constant name="struts.multipart.maxSize" value="-1"/> 
+
+   
+   <package name="nus.iss.action" extends="struts-default">     
+   		<action name="LoginAction" class="nus.iss.action.LoginAction">
+   			<result name="success">/success.jsp</result>
+   		</action>
+   		
+   		<action name="UploadAction" class="nus.iss.action.UploadAction">
+   			<result name="success">/picUpload.jsp</result>
+   			<result name="false">/false.jsp</result>
+   		</action>
+   </package>
+
+</struts>
