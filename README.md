@@ -31,3 +31,7 @@ add **%TOMCAT_HOME%** to the system environment
 ### put the dll file into the fellowing directoris
 - %TOMCAT_HOME%/bin directory
 - use the code System.out.println `((System.getProperty("java.library.path"))` in project to see the library path
+
+## final step
+create new directory : %TOMCAT_HOME%/shared/lib
+put the class file and dll file in this directory(here means JNIInterface.class & IcubeJNI.dll)
