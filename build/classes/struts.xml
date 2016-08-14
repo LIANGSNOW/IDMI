@@ -11,14 +11,18 @@
 
    
    <package name="nus.iss.action" extends="struts-default">     
-   		<action name="LoginAction" class="nus.iss.action.LoginAction">
-   			<result name="success">/success.jsp</result>
-   		</action>
-   		
+   		<!-- 
    		<action name="UploadAction" class="nus.iss.action.UploadAction">
    			<result name="success">/picUpload.jsp</result>
    			<result name="false">/false.jsp</result>
    		</action>
+   		 -->
+   		 <!-- This action could return json as image names but without coordinate -->
+   		<action name="enquiryImagesWithCoordinate" class="enquiryImagesAction" method="enquiryImages"></action>
+   		
+   		<!-- This action could return json as image name with the coordinate -->
+   		<action name="getImageInfoWithCoordinate" class="enquiryImagesAction" method="enquiryImagesWithCoordinate"></action>
+   		
    </package>
 
 </struts>
