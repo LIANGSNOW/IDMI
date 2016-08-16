@@ -46,6 +46,7 @@ public class GetImageByLocationActivity extends AppCompatActivity {
     private static final int MSG_FAILURE = 1;
     private Thread mThread;
     private final int expireTime = 30 * 60 * 60 * 24 * 7;   // expire time of the cache files
+    private final long maximumCacheSize = 1024 * 1024 * 300; // maximum local image cache size
     ArrayList<HashMap<String, String>> imageSetArray;
 
     private static final String serverIP = "http://ec2-54-218-40-64.us-west-2.compute.amazonaws.com:8080";
@@ -143,7 +144,13 @@ public class GetImageByLocationActivity extends AppCompatActivity {
         });
 
         // clear the local cache images once the application start
-        this.delCacheFile(getApplicationContext().getFilesDir().getPath(), this.expireTime);
+        int tempExpireTime = this.expireTime;
+        while(this.getFolderSize(new File(this.getApplicationContext().getFilesDir().getPath())) > this.maximumCacheSize){
+            this.delCacheFile(getApplicationContext().getFilesDir().getPath(), tempExpireTime);
+            if(tempExpireTime > 0){
+                tempExpireTime = tempExpireTime - 60 * 60 * 24;
+            }
+        }
     }
 
     Runnable getImageThread = new Runnable() {
@@ -278,4 +285,22 @@ public class GetImageByLocationActivity extends AppCompatActivity {
         return data;
 
     }
+
+    public  long getFolderSize(File file) {
+        long size = 0;
+        try {
+            File[] fileList = file.listFiles();
+            for (int i = 0; i < fileList.length; i++) {
+                if (fileList[i].isDirectory()) {
+                    size = size + getFolderSize(fileList[i]);
+                } else {
+                    size = size + fileList[i].length();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return size;
+    }
+
 }
