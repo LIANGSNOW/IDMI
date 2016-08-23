@@ -52,27 +52,7 @@
                         android:hint="Latitude"/>
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
 
-                    <Button
-                        android:id="@+id/clearCache"
-                        android:text="clear cache"
-                        android:onClick="clearCache"
-                        android:layout_marginLeft="50px"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-
-                    <Button
-                        android:id="@+id/goToMarker"
-                        android:text="Position"
-                        android:onClick="goToMarkerView"
-                        android:layout_marginLeft="50px"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content" />
-                </LinearLayout>
 
             </LinearLayout>
 
@@ -92,5 +72,27 @@
         android:src="@android:drawable/ic_menu_gallery"
         app:layout_anchor="@id/app_bar"
         app:layout_anchorGravity="bottom|end" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/clearCache"
+            android:text="clear cache"
+            android:onClick="clearCache"
+            android:layout_marginLeft="50px"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/goToMarker"
+            android:text="Position"
+            android:onClick="goToMarkerView"
+            android:layout_marginLeft="50px"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>
