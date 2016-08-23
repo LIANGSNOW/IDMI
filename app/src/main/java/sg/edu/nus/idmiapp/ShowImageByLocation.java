@@ -43,15 +43,14 @@ public class ShowImageByLocation extends AppCompatActivity {
     /*
     show image in the ImageView
      */
-    public void showImage(String imageNameWithUrl){
+    public Bitmap showImage(String imageNameWithUrl){
         String[] split = imageNameWithUrl.split("/");
         String imageName = split[split.length - 1];
         String imageNameWithPath = this.getApplicationContext().getFilesDir().getPath() + File.separator + imageName;
         File imageFile = new File(imageNameWithPath);
         if(!imageFile.exists()){
-            return ;
+            return null;
         }
-        this.bitmap = BitmapFactory.decodeFile(imageNameWithPath);
-        mHandler.obtainMessage(this.MSG_SUCCESS).sendToTarget();
+        return BitmapFactory.decodeFile(imageNameWithPath);
     }
 }

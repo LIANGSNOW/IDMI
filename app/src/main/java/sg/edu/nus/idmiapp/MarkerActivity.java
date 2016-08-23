@@ -1,15 +1,28 @@
 package sg.edu.nus.idmiapp;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +42,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -43,7 +57,12 @@ public class MarkerActivity extends FragmentActivity implements
     private ArrayList<HashMap<String, String>> imageSetArray;
     private GoogleApiClient mGoogleApiClient;
     private TextView mMessageView;
-
+    private Context mcontext;
+    private int height;
+    private int width;
+    private Animation animation = null;
+    private  View viewOfPopWindow;
+    private Bitmap displayImage;
     // These settings are the same as the settings for the map. They will in fact give you updates
     // at the maximal rates currently possible.
     private static final LocationRequest REQUEST = LocationRequest.create()
@@ -55,6 +74,7 @@ public class MarkerActivity extends FragmentActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_marker);
+        mcontext = MarkerActivity.this;
         mMessageView = (TextView) findViewById(R.id.message_text);
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -68,10 +88,15 @@ public class MarkerActivity extends FragmentActivity implements
 
         this.imageSetArray = (ArrayList) getIntent().getSerializableExtra("imageSetArray");
         if (null != imageSetArray) {
-            String text = (imageSetArray.get(0)).get("imageName");
-            Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "got image", Toast.LENGTH_LONG).show();
         }
-
+      //  RelativeLayout mainlayout = (RelativeLayout) findViewById(R.id.mainlayout);
+        RelativeLayout mapview = (RelativeLayout) findViewById(R.id.mapview);
+        LinearLayout forpopwindow = (LinearLayout)findViewById(R.id.forpopwindow);
+        viewOfPopWindow = forpopwindow;
+        ViewGroup.LayoutParams arams = mapview.getLayoutParams();
+        width = arams.width ;
+        height = arams.height ;
     }
 
     @Override
@@ -185,16 +210,76 @@ public class MarkerActivity extends FragmentActivity implements
     @Override
     public boolean onMarkerClick(Marker marker) {
         Toast.makeText(this,marker.getId(),Toast.LENGTH_LONG).show();
-        Intent intent = new Intent();
+       // View v =  new View.OnClickListener()
+      /*  Intent intent = new Intent();
 
         intent.putExtra("imageName", marker.getTitle());
         intent.setClass(this,ShowImageByLocation.class);
-        startActivity(intent);
+        startActivity(intent);*/
+
+        this.displayImage = showImage(marker.getTitle());
+
+        RelativeLayout mapview = (RelativeLayout) findViewById(R.id.mapview);
+        ViewGroup.LayoutParams mParams = mapview.getLayoutParams();
+        mParams.width +=700;
+        mParams.height +=400;
+        mapview.setLayoutParams(mParams);
+
+        initPopWindow(viewOfPopWindow);
+
         return true;
 //        if (marker.equals(myMarker))
 //        {
 //            //handle click here
 //        }
+    }
+
+    /*
+    show image in the ImageView
+     */
+    public Bitmap showImage(String imageNameWithUrl){
+        String[] split = imageNameWithUrl.split("/");
+        String imageName = split[split.length - 1];
+        String imageNameWithPath = this.getApplicationContext().getFilesDir().getPath() + File.separator + imageName;
+        File imageFile = new File(imageNameWithPath);
+        if(!imageFile.exists()){
+            return null;
+        }
+        return BitmapFactory.decodeFile(imageNameWithPath);
+    }
+
+    private void initPopWindow(View v) {
+        View view = LayoutInflater.from(mcontext).inflate(R.layout.pitcure_popin, null, false);
+        ImageView img_first = (ImageView) view.findViewById(R.id.img);
+        //LinearLayout poplayout = (LinearLayout) view.findViewById(R.id.poplayout);
+        img_first.setImageBitmap(displayImage);
+        animation = AnimationUtils.loadAnimation(this,R.anim.amin_pop);
+
+       view.startAnimation(animation);
+        final PopupWindow popWindow = new PopupWindow(view, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
+
+        popWindow.setTouchable(true);
+        popWindow.setTouchInterceptor(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+               RelativeLayout mapview = (RelativeLayout) findViewById(R.id.mapview);
+                ViewGroup.LayoutParams mParams = mapview.getLayoutParams();
+                mParams.width = width;
+                mParams.height = height;
+                mapview.setLayoutParams(mParams);
+
+                /*animation = AnimationUtils.loadAnimation(mcontext,
+                        R.anim.anim_popout);
+
+                v.startAnimation(animation);*/
+                return false;
+                // 这里如果返回true的话，touch事件将被拦截
+                // 拦截后 PopupWindow的onTouchEvent不被调用，这样点击外部区域无法dismiss
+            }
+        });
+        popWindow.setBackgroundDrawable(new ColorDrawable(0x00000000));
+        popWindow.showAsDropDown(v, 0, 0);
+
     }
 
 }
