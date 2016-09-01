@@ -47,6 +47,7 @@ public class EnquiryImageServiceImpl implements IEnquiryImageService {
 					map.put("imageName", this.imageServerURL + image.getImgName());
 					map.put("latitude", image.getLatitude() + "");
 					map.put("longitude", image.getLongitude() + "");
+					map.put("size", image.getSize() + "");
 					jsonArray.put(map);
 				}
 			}
