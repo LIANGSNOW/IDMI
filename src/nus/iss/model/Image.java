@@ -7,7 +7,15 @@ public class Image {
 	private int imgID;
 	private String imgName;
 	private String info;
+	private int size;
 	
+	
+	public int getSize() {
+		return size;
+	}
+	public void setSize(int size) {
+		this.size = size;
+	}
 	public double getLatitude() {
 		return latitude;
 	}

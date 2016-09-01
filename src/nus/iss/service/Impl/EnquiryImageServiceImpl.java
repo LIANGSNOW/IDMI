@@ -86,4 +86,11 @@ public class EnquiryImageServiceImpl implements IEnquiryImageService {
 		this.imageDao = imageDao;
 	}
 
+	@Override
+	public int getTotalSize(List<String> images) {
+		// TODO Auto-generated method stub
+		
+		return this.imageDao.getTotalSize(images);
+	}
+
 }

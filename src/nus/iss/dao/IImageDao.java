@@ -7,5 +7,7 @@ import nus.iss.model.Image;
 public interface IImageDao {
 	
 	public List<Image> getAllImages();
+	
+	public int getTotalSize(List<String> images);
 
 }

@@ -13,6 +13,10 @@
     	<property name="enquiryImageService" ref="enquiryImageService"/>
     </bean>
     
+    <bean id="enquirySizeAction" class="nus.iss.action.EnquirySizeAction">
+    	<property name="enquiryImageService" ref="enquiryImageService" />
+    </bean>
+    
     <bean id="imageDao"  class="org.mybatis.spring.mapper.MapperFactoryBean"
 		scope="prototype">
 		<property name="mapperInterface" value="nus.iss.dao.IImageDao" />

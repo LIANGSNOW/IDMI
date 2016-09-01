@@ -23,6 +23,9 @@
    		<!-- This action could return json as image name with the coordinate -->
    		<action name="getImageInfoWithCoordinate" class="enquiryImagesAction" method="enquiryImagesWithCoordinate"></action>
    		
+   		<!-- This action will return the size of the enquired images by given the names -->
+   		<action name="getTotalSizeByImageNames" class="enquirySizeAction" method="getTotalSizeByImageNames"></action>
+   		
    </package>
 
 </struts>

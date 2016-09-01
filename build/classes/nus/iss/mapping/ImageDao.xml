@@ -9,10 +9,21 @@
         <result column="imgname" property="imgName" />
         <result column="latitude" property="latitude" />
         <result column="longitude" property="longitude" />
+        <result column="size" property="size" />
     </resultMap>
 
     <select id="getAllImages"  resultMap="image" >
-        select imgid, latitude, longitude, imgName from image_info
+        select imgid, latitude, longitude, imgName, size from image_info
     </select>
-
+    
+    
+    <select id="getTotalSize"  resultType="int">
+    	select sum(size) from image_info i
+    		where i.imgName in
+    		<foreach collection="list" item="imgName" index="index"
+    		open="(" close=")" separator=",">
+    			#{imgName}
+    		</foreach>
+    </select>
+    
 </mapper>
