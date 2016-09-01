@@ -1,5 +1,7 @@
 package sg.edu.nus.idmiapp;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -29,12 +31,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 public class GetImageByLocationActivity extends AppCompatActivity {
     String[] urlArray = new String[0];
@@ -44,6 +48,7 @@ public class GetImageByLocationActivity extends AppCompatActivity {
     String[] fileArray = new String[0];
     private static final int MSG_SUCCESS = 0;
     private static final int MSG_FAILURE = 1;
+    private static final int MSG_OUT_OF_CACHE = 2;
     private Thread mThread;
     private final int expireTime = 30 * 60 * 60 * 24 * 7;   // expire time of the cache files
     private final long maximumCacheSize = 1024 * 1024 * 300; // maximum local image cache size
@@ -71,6 +76,9 @@ public class GetImageByLocationActivity extends AppCompatActivity {
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     Toast.makeText(getApplication(), "can not find the image", Toast.LENGTH_LONG).show();
                     break;
+                case MSG_OUT_OF_CACHE:
+                    findViewById(R.id.loadingPanel).setVisibility(View.GONE);
+                    alertView("You do not have enough space, please clear your cache firstly!");
             }
         }
     };
@@ -166,6 +174,10 @@ public class GetImageByLocationActivity extends AppCompatActivity {
                 String lat = latitude.getText().toString();
                 String lon = longitude.getText().toString();
 
+                int unCachedFileSize = 0;
+                ArrayList<String> cachedFile = new ArrayList<>();
+                ArrayList<String> unCachedFile = new ArrayList<>();
+
                 //request images info from server by the point
 //                  String path = serverIP + "/IcubeServer/enquiryImagesWithCoordinate?latitude="+lat+"&longitude="+lon;
                 String path = serverIP + "/IcubeServer/getImageInfoWithCoordinate?latitude="+lat+"&longitude="+lon;
@@ -187,23 +199,26 @@ public class GetImageByLocationActivity extends AppCompatActivity {
                     }
                 }
 
-                if(urlArray.length!=0){
+                if(urlArray.length != 0){
                     bitmap = new Bitmap[urlArray.length];
-                    for(int i=0;i<urlArray.length;i++){
+                    for(int i=0;i<urlArray.length;i++) {
                         // request images from image server
                         File f = new File(getApplicationContext().getFilesDir().getAbsolutePath(), fileArray[i]);
-                        String filePath = getApplicationContext().getFilesDir().getAbsolutePath()+"/"+fileArray[i];
+                        String filePath = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + fileArray[i];
                         if (f.exists()) {
-                            bitmap[i] = BitmapFactory.decodeFile(filePath);
-                        }else{
-                            byte[] data = getImage(urlArray[i]);
-                            bitmap[i] = BitmapFactory.decodeByteArray(data, 0, data.length);
-                            FileOutputStream out = new FileOutputStream(f);
-                            bitmap[i].compress(Bitmap.CompressFormat.PNG, 90, out);
-                            out.flush();
-                            out.close();
+                            cachedFile.add(filePath);
+                        } else {
+                            unCachedFile.add(urlArray[i]);
+                            unCachedFileSize += Integer.parseInt(imageSetArray.get(i).get("size"));
                         }
                     }
+                    if(unCachedFileSize + getFolderSize(new File(getApplicationContext().getFilesDir().getPath())) > maximumCacheSize){
+                        mHandler.obtainMessage(MSG_OUT_OF_CACHE).sendToTarget();
+                        return ;
+                    } else{
+                        setBitMaps(cachedFile, unCachedFile);
+                    }
+
                     mHandler.obtainMessage(MSG_SUCCESS).sendToTarget();
                 }
             } catch (Exception e) {
@@ -212,6 +227,44 @@ public class GetImageByLocationActivity extends AppCompatActivity {
             }
         }
     };
+
+    private void setBitMaps(List<String> cachedFile, List<String> uncachedFile) throws IOException {
+        int count = 0;
+        if(cachedFile.size() > 0){
+            for(int i = 0; i < cachedFile.size(); i++){
+                this.bitmap[count] = BitmapFactory.decodeFile(cachedFile.get(i));
+                count++;
+            }
+        }
+        if(uncachedFile.size() > 0){
+            for(int i = 0; i < uncachedFile.size(); i++){
+                byte[] data = getImage(uncachedFile.get(i));
+                bitmap[count] = BitmapFactory.decodeByteArray(data, 0, data.length);
+                String[] temp = uncachedFile.get(i).split("/");
+                File file = new File(this.getApplicationContext().getFilesDir().getAbsolutePath() + "/" + temp[temp.length - 1]);
+                FileOutputStream out = new FileOutputStream(file);
+                bitmap[count].compress(Bitmap.CompressFormat.PNG, 90, out);
+                count++;
+                out.flush();
+                out.close();
+            }
+        }
+    }
+
+    private void alertView(String message) {
+        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle("Alert");
+        alertDialog.setMessage(message);
+        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        alertDialog.show();
+    }
+
+
 
     /*
     Get image information by url
@@ -233,6 +286,7 @@ public class GetImageByLocationActivity extends AppCompatActivity {
                 map.put("imageName",jsonObject.getString("imageName"));
                 map.put("latitude",jsonObject.getString("latitude"));
                 map.put("longitude",jsonObject.getString("longitude"));
+                map.put("size", jsonObject.getString("size"));
                 this.imageSetArray.add(map);
             }
         }
@@ -273,10 +327,10 @@ public class GetImageByLocationActivity extends AppCompatActivity {
     public byte[] getImage(String path) throws IOException {
         URL url = new URL(path);
         HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-        conn.setRequestMethod("GET");   //设置请求方法为GET
-        conn.setReadTimeout(5*1000);    //设置请求过时时间为5秒
-        InputStream inputStream = conn.getInputStream();   //通过输入流获得图片数据
-        byte[] data = new byte[0];     //获得图片的二进制数据
+        conn.setRequestMethod("GET");
+        conn.setReadTimeout(5*1000);
+        InputStream inputStream = conn.getInputStream();
+        byte[] data = new byte[0];
         try {
             data = readStream(inputStream);
         } catch (Exception e) {
@@ -286,7 +340,7 @@ public class GetImageByLocationActivity extends AppCompatActivity {
 
     }
 
-    public  long getFolderSize(File file) {
+    public long getFolderSize(File file) {
         long size = 0;
         try {
             File[] fileList = file.listFiles();
