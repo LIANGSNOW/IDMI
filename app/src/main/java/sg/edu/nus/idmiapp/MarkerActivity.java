@@ -211,13 +211,13 @@ public class MarkerActivity extends FragmentActivity implements
     public boolean onMarkerClick(Marker marker) {
         Toast.makeText(this,marker.getId(),Toast.LENGTH_LONG).show();
        // View v =  new View.OnClickListener()
-      /*  Intent intent = new Intent();
+       Intent intent = new Intent();
 
         intent.putExtra("imageName", marker.getTitle());
         intent.setClass(this,ShowImageByLocation.class);
-        startActivity(intent);*/
+        startActivity(intent);
 
-        this.displayImage = showImage(marker.getTitle());
+       /* this.displayImage = showImage(marker.getTitle());
 
         RelativeLayout mapview = (RelativeLayout) findViewById(R.id.mapview);
         ViewGroup.LayoutParams mParams = mapview.getLayoutParams();
@@ -225,7 +225,7 @@ public class MarkerActivity extends FragmentActivity implements
         mParams.height +=400;
         mapview.setLayoutParams(mParams);
 
-        initPopWindow(viewOfPopWindow);
+        initPopWindow(viewOfPopWindow);*/
 
         return true;
 //        if (marker.equals(myMarker))

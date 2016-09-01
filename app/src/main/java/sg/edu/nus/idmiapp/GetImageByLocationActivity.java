@@ -1,8 +1,11 @@
 package sg.edu.nus.idmiapp;
 
+import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -10,6 +13,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -20,7 +25,16 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -40,12 +54,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-public class GetImageByLocationActivity extends AppCompatActivity {
+public class GetImageByLocationActivity extends AppCompatActivity implements
+        OnMapReadyCallback {
     String[] urlArray = new String[0];
     EditText latitude;
     EditText longitude;
     Bitmap[] bitmap;
     String[] fileArray = new String[0];
+
     private static final int MSG_SUCCESS = 0;
     private static final int MSG_FAILURE = 1;
     private static final int MSG_OUT_OF_CACHE = 2;
@@ -53,7 +69,11 @@ public class GetImageByLocationActivity extends AppCompatActivity {
     private final int expireTime = 30 * 60 * 60 * 24 * 7;   // expire time of the cache files
     private final long maximumCacheSize = 1024 * 1024 * 300; // maximum local image cache size
     ArrayList<HashMap<String, String>> imageSetArray;
-
+    private GoogleApiClient mGoogleApiClient;
+    private static final LocationRequest REQUEST = LocationRequest.create()
+            .setInterval(5000)         // 5 seconds
+            .setFastestInterval(16)    // 16ms = 60fps
+            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     private static final String serverIP = "http://ec2-54-218-40-64.us-west-2.compute.amazonaws.com:8080";
 
     private Handler mHandler = new Handler() {
@@ -135,7 +155,25 @@ public class GetImageByLocationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         //set layout
         setContentView(R.layout.activity_get_image_by_location);
+        SupportMapFragment mapFragment =
+                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+        GoogleMap map = mapFragment.getMap();
+        map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
+            @Override
+            public void onMapClick(LatLng position) {
+                Intent intent = new Intent();
+                intent.setClass(GetImageByLocationActivity.this,MarkerActivity.class);
+                intent.putExtra("imageSetArray", imageSetArray);
+                startActivity(intent);
+
+
+            }
+        });
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .build();
         //get fab button and set listener
         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -150,7 +188,6 @@ public class GetImageByLocationActivity extends AppCompatActivity {
 
             }
         });
-
         // clear the local cache images once the application start
         int tempExpireTime = this.expireTime;
         while(this.getFolderSize(new File(this.getApplicationContext().getFilesDir().getPath())) > this.maximumCacheSize){
@@ -159,6 +196,7 @@ public class GetImageByLocationActivity extends AppCompatActivity {
                 tempExpireTime = tempExpireTime - 60 * 60 * 24;
             }
         }
+
     }
 
     Runnable getImageThread = new Runnable() {
@@ -356,5 +394,20 @@ public class GetImageByLocationActivity extends AppCompatActivity {
         }
         return size;
     }
+
+    //map init
+    @Override
+    public void onMapReady(GoogleMap map) {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                        PackageManager.PERMISSION_GRANTED) {
+            map.setMyLocationEnabled(true);
+
+        } else {
+            Toast.makeText(this, "No Permission", Toast.LENGTH_LONG).show();
+        }
+    }
+
 
 }
