@@ -23,7 +23,8 @@ public class ShowImageByLocation extends AppCompatActivity {
         setContentView(R.layout.activity_show_image_by_location);
 
         // the activity should get image name from the intent, and the image file name should not include the path
-        showImage(this.getIntent().getStringExtra("imageName"));
+        this.bitmap = showImage(this.getIntent().getStringExtra("imageName"));
+        mHandler.obtainMessage(MSG_SUCCESS).sendToTarget();
     }
 
     /*
@@ -33,6 +34,8 @@ public class ShowImageByLocation extends AppCompatActivity {
         public void handleMessage(Message msg){
             switch(msg.what){
                 case MSG_SUCCESS:
+                    if(null == bitmap)
+                        return;
                     ImageView imageView = (ImageView) findViewById(R.id.imageByLocation);
                     imageView.setImageBitmap(bitmap);
                     break;

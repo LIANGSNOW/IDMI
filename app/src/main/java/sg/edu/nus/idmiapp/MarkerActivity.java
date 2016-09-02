@@ -217,9 +217,9 @@ public class MarkerActivity extends FragmentActivity implements
         intent.setClass(this,ShowImageByLocation.class);
         startActivity(intent);
 
-       /* this.displayImage = showImage(marker.getTitle());
+       this.displayImage = showImage(marker.getTitle());
 
-        RelativeLayout mapview = (RelativeLayout) findViewById(R.id.mapview);
+       /* RelativeLayout mapview = (RelativeLayout) findViewById(R.id.mapview);
         ViewGroup.LayoutParams mParams = mapview.getLayoutParams();
         mParams.width +=700;
         mParams.height +=400;
