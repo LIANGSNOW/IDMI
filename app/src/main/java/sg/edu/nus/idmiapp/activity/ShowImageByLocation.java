@@ -36,6 +36,8 @@ public class ShowImageByLocation extends AppCompatActivity {
         public void handleMessage(Message msg){
             switch(msg.what){
                 case MSG_SUCCESS:
+                    if(null == bitmap)
+                        return;
                     ImageView imageView = (ImageView) findViewById(R.id.imageByLocation);
                     imageView.setImageBitmap(bitmap);
                     break;
