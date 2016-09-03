@@ -24,4 +24,8 @@ public interface CacheService {
      */
     public Bitmap getImageFromLocalCache(String localCachePath, String imageNameWithUrl);
 
+    /*
+    check the local cache on activity start
+     */
+    void clearCacheOnStart(String localCachePath);
 }

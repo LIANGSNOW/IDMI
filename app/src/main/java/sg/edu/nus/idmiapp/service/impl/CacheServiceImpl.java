@@ -11,6 +11,7 @@ import java.util.List;
 
 import sg.edu.nus.idmiapp.service.CacheService;
 import sg.edu.nus.idmiapp.service.ImageService;
+import sg.edu.nus.idmiapp.utils.Configure;
 
 /**
  * Created by zz on 3/9/16.
@@ -75,5 +76,13 @@ public class CacheServiceImpl implements CacheService{
         return BitmapFactory.decodeFile(imageNameWithPath);
     }
 
-
+    public void clearCacheOnStart(String localCachePath){
+        int tempExpireTime = Configure.expireTime;
+        while(enquiryFolderSize(new File(localCachePath)) > Configure.maximumCacheSize){
+            delCacheFile(localCachePath, tempExpireTime);
+            if(tempExpireTime > 0){
+                tempExpireTime = tempExpireTime - 60 * 60 * 24;
+            }
+        }
+    }
 }

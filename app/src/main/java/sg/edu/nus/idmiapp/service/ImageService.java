@@ -27,4 +27,6 @@ public interface ImageService {
 
      */
     Bitmap[] getBitMaps(List<String> cachedFile, List<String> uncachedFile, String localCachePath) throws IOException;
+
+
 }
