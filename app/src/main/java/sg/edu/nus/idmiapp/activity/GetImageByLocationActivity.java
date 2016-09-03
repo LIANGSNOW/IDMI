@@ -51,6 +51,7 @@ import sg.edu.nus.idmiapp.service.ImageService;
 import sg.edu.nus.idmiapp.service.impl.CacheServiceImpl;
 import sg.edu.nus.idmiapp.service.impl.ImageServiceImpl;
 import sg.edu.nus.idmiapp.utils.Configure;
+import sg.edu.nus.idmiapp.utils.UIMessage;
 
 public class GetImageByLocationActivity extends AppCompatActivity implements
         OnMapReadyCallback {
@@ -60,9 +61,6 @@ public class GetImageByLocationActivity extends AppCompatActivity implements
     Bitmap[] bitmap;
     String[] fileArray = new String[0];
 
-    private static final int MSG_SUCCESS = 0;
-    private static final int MSG_FAILURE = 1;
-    private static final int MSG_OUT_OF_CACHE = 2;
     private Thread mThread;
     ArrayList<HashMap<String, String>> imageSetArray;
     private GoogleApiClient mGoogleApiClient;
@@ -76,7 +74,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements
     private Handler mHandler = new Handler() {
         public void handleMessage (Message msg) {
             switch(msg.what) {
-                case MSG_SUCCESS:
+                case UIMessage.MSG_SUCCESS:
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     ViewGroup group = (ViewGroup) findViewById(R.id.viewGroup);
                     ImageView[] imageViews = new ImageView[bitmap.length];
@@ -89,11 +87,11 @@ public class GetImageByLocationActivity extends AppCompatActivity implements
                     }
                     break;
 
-                case MSG_FAILURE:
+                case UIMessage.MSG_FAILURE:
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     Toast.makeText(getApplication(), "can not find the image", Toast.LENGTH_LONG).show();
                     break;
-                case MSG_OUT_OF_CACHE:
+                case UIMessage.MSG_OUT_OF_CACHE:
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     alertView("You do not have enough space, please clear your cache firstly!");
             }
@@ -180,7 +178,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements
 
             try {
 
-                //get latitude & lognitude from text view
+                //get latitude & longitude from text view
                 latitude = (EditText)findViewById(R.id.latitude);
                 longitude = (EditText)findViewById(R.id.longitude);
                 String lat = latitude.getText().toString();
@@ -203,7 +201,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements
                     }
                     urlArray = new String[total];
                     fileArray = new String[total];
-                    for(int i=0;i<total;i++){
+                    for(int i=0; i < total; i++){
                         urlArray[i] = imageNameArray.get(i);
                         String[] temp = urlArray[i].split("/");
                         fileArray[i] = temp[temp.length-1];
@@ -225,43 +223,22 @@ public class GetImageByLocationActivity extends AppCompatActivity implements
                         }
                     }
                     if(unCachedFileSize + cacheService.enquiryFolderSize(new File(getApplicationContext().getFilesDir().getPath())) > Configure.maximumCacheSize){
-                        mHandler.obtainMessage(MSG_OUT_OF_CACHE).sendToTarget();
+                        mHandler.obtainMessage(UIMessage.MSG_OUT_OF_CACHE).sendToTarget();
                         return ;
                     } else{
-                        setBitMaps(cachedFile, unCachedFile);
+                        bitmap = imageService.getBitMaps(cachedFile, unCachedFile, getApplicationContext().getFilesDir().getPath());
                     }
 
-                    mHandler.obtainMessage(MSG_SUCCESS).sendToTarget();
+                    mHandler.obtainMessage(UIMessage.MSG_SUCCESS).sendToTarget();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                mHandler.obtainMessage(MSG_FAILURE).sendToTarget();
+                mHandler.obtainMessage(UIMessage.MSG_FAILURE).sendToTarget();
             }
         }
     };
 
-    private void setBitMaps(List<String> cachedFile, List<String> uncachedFile) throws IOException {
-        int count = 0;
-        if(cachedFile.size() > 0){
-            for(int i = 0; i < cachedFile.size(); i++){
-                this.bitmap[count] = BitmapFactory.decodeFile(cachedFile.get(i));
-                count++;
-            }
-        }
-        if(uncachedFile.size() > 0){
-            for(int i = 0; i < uncachedFile.size(); i++){
-                byte[] data = imageService.getImageBytes(uncachedFile.get(i));
-                bitmap[count] = BitmapFactory.decodeByteArray(data, 0, data.length);
-                String[] temp = uncachedFile.get(i).split("/");
-                File file = new File(this.getApplicationContext().getFilesDir().getAbsolutePath() + "/" + temp[temp.length - 1]);
-                FileOutputStream out = new FileOutputStream(file);
-                bitmap[count].compress(Bitmap.CompressFormat.PNG, 90, out);
-                count++;
-                out.flush();
-                out.close();
-            }
-        }
-    }
+
 
     private void alertView(String message) {
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();

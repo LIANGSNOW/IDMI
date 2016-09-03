@@ -12,21 +12,25 @@ import android.widget.ImageView;
 import java.io.File;
 
 import sg.edu.nus.idmiapp.R;
+import sg.edu.nus.idmiapp.service.CacheService;
+import sg.edu.nus.idmiapp.service.impl.CacheServiceImpl;
+import sg.edu.nus.idmiapp.utils.UIMessage;
 
 public class ShowImageByLocation extends AppCompatActivity {
 
     Bitmap bitmap;
-    private static final int MSG_SUCCESS = 0;
-    private static final int MSG_FAILURE = 1;
+    private CacheService cacheService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //init service
+        this.cacheService = new CacheServiceImpl();
         setContentView(R.layout.activity_show_image_by_location);
 
         // the activity should get image name from the intent, and the image file name should not include the path
-        this.bitmap = showImage(this.getIntent().getStringExtra("imageName"));
-        mHandler.obtainMessage(MSG_SUCCESS).sendToTarget();
+        this.bitmap = this.cacheService.getImageFromLocalCache(this.getApplicationContext().getFilesDir().getPath(), this.getIntent().getStringExtra("imageName"));
+        mHandler.obtainMessage(UIMessage.MSG_SUCCESS).sendToTarget();
     }
 
     /*
@@ -35,7 +39,7 @@ public class ShowImageByLocation extends AppCompatActivity {
     Handler mHandler = new Handler(){
         public void handleMessage(Message msg){
             switch(msg.what){
-                case MSG_SUCCESS:
+                case UIMessage.MSG_SUCCESS:
                     if(null == bitmap)
                         return;
                     ImageView imageView = (ImageView) findViewById(R.id.imageByLocation);
@@ -45,17 +49,5 @@ public class ShowImageByLocation extends AppCompatActivity {
         }
     };
 
-    /*
-    show image in the ImageView
-     */
-    public Bitmap showImage(String imageNameWithUrl){
-        String[] split = imageNameWithUrl.split("/");
-        String imageName = split[split.length - 1];
-        String imageNameWithPath = this.getApplicationContext().getFilesDir().getPath() + File.separator + imageName;
-        File imageFile = new File(imageNameWithPath);
-        if(!imageFile.exists()){
-            return null;
-        }
-        return BitmapFactory.decodeFile(imageNameWithPath);
-    }
+
 }

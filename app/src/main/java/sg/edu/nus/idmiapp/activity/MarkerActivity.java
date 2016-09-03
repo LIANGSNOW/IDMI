@@ -215,8 +215,6 @@ public class MarkerActivity extends FragmentActivity implements
         intent.setClass(this,ShowImageByLocation.class);
         startActivity(intent);
 
-       this.displayImage = showImage(marker.getTitle());
-
        /* RelativeLayout mapview = (RelativeLayout) findViewById(R.id.mapview);
         ViewGroup.LayoutParams mParams = mapview.getLayoutParams();
         mParams.width +=700;
@@ -226,58 +224,6 @@ public class MarkerActivity extends FragmentActivity implements
         initPopWindow(viewOfPopWindow);*/
 
         return true;
-//        if (marker.equals(myMarker))
-//        {
-//            //handle click here
-//        }
     }
-
-    /*
-    show image in the ImageView
-     */
-    public Bitmap showImage(String imageNameWithUrl){
-        String[] split = imageNameWithUrl.split("/");
-        String imageName = split[split.length - 1];
-        String imageNameWithPath = this.getApplicationContext().getFilesDir().getPath() + File.separator + imageName;
-        File imageFile = new File(imageNameWithPath);
-        if(!imageFile.exists()){
-            return null;
-        }
-        return BitmapFactory.decodeFile(imageNameWithPath);
-    }
-
-    private void initPopWindow(View v) {
-        View view = LayoutInflater.from(mcontext).inflate(R.layout.pitcure_popin, null, false);
-        ImageView img_first = (ImageView) view.findViewById(R.id.img);
-        //LinearLayout poplayout = (LinearLayout) view.findViewById(R.id.poplayout);
-        img_first.setImageBitmap(displayImage);
-        animation = AnimationUtils.loadAnimation(this,R.anim.amin_pop);
-
-       view.startAnimation(animation);
-        final PopupWindow popWindow = new PopupWindow(view, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-
-        popWindow.setTouchable(true);
-        popWindow.setTouchInterceptor(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-               RelativeLayout mapview = (RelativeLayout) findViewById(R.id.mapview);
-                ViewGroup.LayoutParams mParams = mapview.getLayoutParams();
-                mParams.width = width;
-                mParams.height = height;
-                mapview.setLayoutParams(mParams);
-
-                /*animation = AnimationUtils.loadAnimation(mcontext,
-                        R.anim.anim_popout);
-
-                v.startAnimation(animation);*/
-                return false;
-                // 这里如果返回true的话，touch事件将被拦截
-                // 拦截后 PopupWindow的onTouchEvent不被调用，这样点击外部区域无法dismiss
-            }
-        });
-        popWindow.setBackgroundDrawable(new ColorDrawable(0x00000000));
-        popWindow.showAsDropDown(v, 0, 0);
-
-    }
-
+    
 }

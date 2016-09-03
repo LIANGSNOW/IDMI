@@ -1,15 +1,21 @@
 package sg.edu.nus.idmiapp.service.impl;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import sg.edu.nus.idmiapp.service.ImageService;
 
@@ -69,5 +75,30 @@ public class ImageServiceImpl implements ImageService{
             }
         }
         return imageInfoArray;
+    }
+
+    public Bitmap[] getBitMaps(List<String> cachedFile, List<String> uncachedFile, String localCachePath) throws IOException {
+        Bitmap[] bitmap = new Bitmap[cachedFile.size() + uncachedFile.size()];
+        int count = 0;
+        if(cachedFile.size() > 0){
+            for(int i = 0; i < cachedFile.size(); i++){
+                bitmap[count] = BitmapFactory.decodeFile(cachedFile.get(i));
+                count++;
+            }
+        }
+        if(uncachedFile.size() > 0){
+            for(int i = 0; i < uncachedFile.size(); i++){
+                byte[] data = getImageBytes(uncachedFile.get(i));
+                bitmap[count] = BitmapFactory.decodeByteArray(data, 0, data.length);
+                String[] temp = uncachedFile.get(i).split("/");
+                File file = new File(localCachePath + "/" + temp[temp.length - 1]);
+                FileOutputStream out = new FileOutputStream(file);
+                bitmap[count].compress(Bitmap.CompressFormat.PNG, 90, out);
+                count++;
+                out.flush();
+                out.close();
+            }
+        }
+        return bitmap;
     }
 }

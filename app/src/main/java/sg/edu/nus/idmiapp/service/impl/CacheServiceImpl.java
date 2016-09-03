@@ -1,9 +1,16 @@
 package sg.edu.nus.idmiapp.service.impl;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 import sg.edu.nus.idmiapp.service.CacheService;
+import sg.edu.nus.idmiapp.service.ImageService;
 
 /**
  * Created by zz on 3/9/16.
@@ -55,4 +62,18 @@ public class CacheServiceImpl implements CacheService{
         }
         return size;
     }
+
+    @Override
+    public Bitmap getImageFromLocalCache(String localCachePath, String imageNameWithUrl){
+        String[] split = imageNameWithUrl.split("/");
+        String imageName = split[split.length - 1];
+        String imageNameWithPath = localCachePath + File.separator + imageName;
+        File imageFile = new File(imageNameWithPath);
+        if(!imageFile.exists()){
+            return null;
+        }
+        return BitmapFactory.decodeFile(imageNameWithPath);
+    }
+
+
 }
