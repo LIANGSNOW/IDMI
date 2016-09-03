@@ -10,5 +10,10 @@ public interface Configure {
     int expireTime = 30 * 60 * 60 * 24 * 7;   // expire time of the cache files
     long maximumCacheSize = 1024 * 1024 * 300; // maximum local image cache size
 
+    /*
+    test coordinate information
+     */
+    String lat = 1.282094223251917 + "";
+    String lon = 103.85423897696749 + "";
 }
 

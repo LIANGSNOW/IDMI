@@ -79,7 +79,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         this.imageService = new ImageServiceImpl();
 
         //set layout
-        setContentView(R.layout.activity_get_image_by_location);
+        setContentView(R.layout.activity_show_image);
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -175,19 +175,13 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
 
             try {
 
-                //get latitude & longitude from text view
-                latitude = (EditText)findViewById(R.id.latitude);
-                longitude = (EditText)findViewById(R.id.longitude);
-                String lat = latitude.getText().toString();
-                String lon = longitude.getText().toString();
-
                 int unCachedFileSize = 0;
                 ArrayList<String> cachedFile = new ArrayList<>();
                 ArrayList<String> unCachedFile = new ArrayList<>();
 
                 //request images info from server by the point
 //                  String path = serverIP + "/IcubeServer/enquiryImagesWithCoordinate?latitude="+lat+"&longitude="+lon;
-                String path = Configure.serverIP + "/IcubeServer/getImageInfoWithCoordinate?latitude="+lat+"&longitude="+lon;
+                String path = Configure.serverIP + "/IcubeServer/getImageInfoWithCoordinate?latitude=" + Configure.lat + "&longitude=" + Configure.lon;
                 imageSetArray = imageService.getImageSets(path);
 
                 if(null != imageSetArray){
