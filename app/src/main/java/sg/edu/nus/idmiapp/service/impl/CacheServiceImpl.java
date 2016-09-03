@@ -1,0 +1,58 @@
+package sg.edu.nus.idmiapp.service.impl;
+
+import java.io.File;
+import java.util.Date;
+
+import sg.edu.nus.idmiapp.service.CacheService;
+
+/**
+ * Created by zz on 3/9/16.
+ */
+public class CacheServiceImpl implements CacheService{
+    @Override
+    public boolean delCacheFile(String path, int expireTime) {
+        boolean flag = false;
+        File file = new File(path);
+        if (!file.exists()) {
+            return flag;
+        }
+        if (!file.isDirectory()) {
+            return flag;
+        }
+        String[] tempList = file.list();
+        File temp = null;
+        for (int i = 0; i < tempList.length; i++) {
+            if (path.endsWith(File.separator)) {
+                temp = new File(path + tempList[i]);
+            } else {
+                temp = new File(path + File.separator + tempList[i]);
+            }
+            if (temp.isFile()) {
+                long lastModiefy = temp.lastModified();
+                long current = new Date().getTime();
+                if (current - lastModiefy > (expireTime)) {
+                    temp.delete();
+                }
+            }
+        }
+        return flag;
+    }
+
+    @Override
+    public long enquiryFolderSize(File file) {
+        long size = 0;
+        try {
+            File[] fileList = file.listFiles();
+            for (int i = 0; i < fileList.length; i++) {
+                if (fileList[i].isDirectory()) {
+                    size = size + enquiryFolderSize(fileList[i]);
+                } else {
+                    size = size + fileList[i].length();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return size;
+    }
+}
