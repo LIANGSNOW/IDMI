@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import sg.edu.nus.idmiapp.dao.ImageDAO;
+
 /**
  * Created by zz on 3/9/16.
  */
@@ -21,10 +23,10 @@ public interface ImageService {
     /*
     Get image information by url
      */
-    ArrayList getImageSets(String path) throws Exception;
+    ArrayList<ImageDAO> getImageSets(String path) throws Exception;
 
     /*
-
+    get images' bitmap
      */
     Bitmap[] getBitMaps(List<String> cachedFile, List<String> uncachedFile, String localCachePath) throws IOException;
 

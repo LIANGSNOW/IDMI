@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import sg.edu.nus.idmiapp.R;
+import sg.edu.nus.idmiapp.dao.ImageDAO;
 
 public class MarkerActivity extends FragmentActivity implements
         OnMapReadyCallback,
@@ -52,7 +53,7 @@ public class MarkerActivity extends FragmentActivity implements
         LocationListener,
         GoogleMap.OnMyLocationButtonClickListener {
 
-    private ArrayList<HashMap<String, String>> imageSetArray;
+    private ArrayList<ImageDAO> imageSetArray;
     private GoogleApiClient mGoogleApiClient;
     private TextView mMessageView;
     private Context mcontext;
@@ -126,13 +127,13 @@ public class MarkerActivity extends FragmentActivity implements
         if (null == this.imageSetArray) {
             return;
         }
-        for (HashMap<String, String> item : this.imageSetArray) {
-            LatLng latLng = new LatLng(Double.parseDouble(item.get("latitude")), Double.parseDouble(item.get("longitude")));
-            map.addMarker(new MarkerOptions().position(latLng).title(item.get("imageName")));
+        for (ImageDAO item : this.imageSetArray) {
+            LatLng latLng = new LatLng(Double.parseDouble(item.getLatitude()), Double.parseDouble(item.getLongitude()));
+            map.addMarker(new MarkerOptions().position(latLng).title(item.getImageNameWithCloudStorageURL()));
         }
 
         map.setOnMarkerClickListener(this);
-        LatLng latLng = new LatLng(Double.parseDouble(this.imageSetArray.get(0).get("latitude")), Double.parseDouble(this.imageSetArray.get(0).get("longitude")));
+        LatLng latLng = new LatLng(Double.parseDouble(this.imageSetArray.get(0).getLatitude()), Double.parseDouble(this.imageSetArray.get(0).getLongitude()));
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
 
     }

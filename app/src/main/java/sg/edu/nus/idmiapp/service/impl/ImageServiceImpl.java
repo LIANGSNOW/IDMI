@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import sg.edu.nus.idmiapp.dao.ImageDAO;
 import sg.edu.nus.idmiapp.service.ImageService;
 
 /**
@@ -53,8 +54,8 @@ public class ImageServiceImpl implements ImageService{
     }
 
     @Override
-    public ArrayList getImageSets(String path) throws Exception {
-        ArrayList<HashMap<String,String>> imageInfoArray = new ArrayList<>();
+    public ArrayList<ImageDAO> getImageSets(String path) throws Exception {
+        ArrayList<ImageDAO> imageInfoArray = new ArrayList<>();
         URL url = new URL(path);
         HttpURLConnection con = (HttpURLConnection)url.openConnection();
         con.setRequestMethod("GET");
@@ -66,12 +67,14 @@ public class ImageServiceImpl implements ImageService{
             JSONObject jsonObject;
             for(int i = 0;i < jsonArray.length();i++){
                 jsonObject = jsonArray.getJSONObject(i);
-                HashMap<String, String> map = new HashMap<>();
-                map.put("imageName",jsonObject.getString("imageName"));
-                map.put("latitude",jsonObject.getString("latitude"));
-                map.put("longitude",jsonObject.getString("longitude"));
-                map.put("size", jsonObject.getString("size"));
-                imageInfoArray.add(map);
+                ImageDAO image = new ImageDAO();
+                image.setImageNameWithCloudStorageURL(jsonObject.getString("imageName"));
+                String temp[] = jsonObject.getString("imageName").split("/");
+                image.setImageName(temp[temp.length - 1]);
+                image.setLatitude(jsonObject.getString("latitude"));
+                image.setLongitude(jsonObject.getString("longitude"));
+                image.setSize(Integer.parseInt(jsonObject.getString("size")));
+                imageInfoArray.add(image);
             }
         }
         return imageInfoArray;
