@@ -55,6 +55,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     private CacheService cacheService;
     private ImageService imageService;
+    private ViewGroup imageViewGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,10 +75,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
 
             @Override
             public void onMapClick(LatLng position) {
-                Intent intent = new Intent();
-                intent.setClass(GetImageByLocationActivity.this,MarkerActivity.class);
-                intent.putExtra("imageSetArray", imageSetArray);
-                startActivity(intent);
+                goToMarkerView();
             }
         });
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -98,14 +96,14 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             switch(msg.what) {
                 case UIMessage.MSG_SUCCESS:
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-                    ViewGroup group = (ViewGroup) findViewById(R.id.viewGroup);
+                    imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
                     ImageView[] imageViews = new ImageView[bitmap.length];
                     for (int i = 0; i < imageViews.length; i++) {
                         ImageView imageView = new ImageView(getApplication());
                         imageView.setLayoutParams(new AppBarLayout.LayoutParams(AppBarLayout.LayoutParams.MATCH_PARENT, AppBarLayout.LayoutParams.WRAP_CONTENT));
                         imageViews[i] = imageView;
                         imageView.setImageBitmap(bitmap[i]);
-                        group.addView(imageView);
+                        imageViewGroup.addView(imageView);
                     }
                     break;
 
@@ -116,6 +114,10 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                 case UIMessage.MSG_OUT_OF_CACHE:
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     alertView("You do not have enough space, please clear your cache firstly!");
+                    break;
+                case UIMessage.MSG_NO_IMAGE:
+                    alertView("Please get the image firstly!");
+                    break;
             }
         }
     };
@@ -124,8 +126,8 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     listen to get image button
      */
     public void getImage(View view){
-        ViewGroup group = (ViewGroup) findViewById(R.id.viewGroup);
-        group.removeAllViews();
+        imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
+        imageViewGroup.removeAllViews();
         findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         mThread = new Thread(getImageThread);
         mThread.start();
@@ -136,12 +138,16 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
      */
     public void clearCache(View view){
         this.cacheService.delCacheFile(this.getApplicationContext().getFilesDir().getAbsolutePath(), -1);
+        this.imageSetArray = null;
+        imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
+        imageViewGroup.removeAllViews();
     }
 
-    /*
-    listen to map button
-     */
-    public void goToMarkerView(View view){
+    public void goToMarkerView(){
+        if(null == this.imageSetArray){
+            mHandler.obtainMessage(UIMessage.MSG_NO_IMAGE).sendToTarget();
+            return ;
+        }
         Intent intent = new Intent();
         intent.setClass(this, MarkerActivity.class);
         intent.putExtra("imageSetArray", this.imageSetArray);
