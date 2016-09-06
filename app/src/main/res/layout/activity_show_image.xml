@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
+    android:background="@drawable/background1"
     tools:context=".activity.GetImageByLocationActivity">
 
 
@@ -29,24 +30,47 @@
                 android:layout_weight="5"
                 android:weightSum="10">
 
-                <Button
-                    android:id="@+id/getImage"
-                    android:text="get image"
-                    android:layout_marginTop="30dp"
-                    android:onClick="getImage"
-                    android:layout_width="wrap_content"
+                <ImageButton
+                    android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="3"
-                    android:layout_gravity="center"/>
+                    android:id = "@+id/getImage"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/image"
+                    android:layout_weight="4"
+                    android:background="@color/lucency"
+                    android:layout_marginTop="10dp"
+                    android:onClick="getImage" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:id = "@+id/getImage_text"
+                    android:text="Get Image"
+                    android:textSize="12dp"
+                    android:textColor="@color/white"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center"/>
 
-                <Button
-                    android:id="@+id/clearCache"
-                    android:text="clear cache"
-                    android:onClick="clearCache"
-                    android:layout_width="wrap_content"
+                <ImageButton
+                    android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="3"
-                    android:layout_gravity="center"/>
+                    android:id="@+id/clearCache"
+                    android:onClick="clearCache"
+                    android:layout_weight="4"
+                    android:scaleType="centerInside"
+                    android:background="@color/lucency"
+                    android:layout_marginTop="10dp"
+                    android:src="@drawable/cache"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:id="@+id/clearCache_text"
+                    android:text = "Clear Cache"
+                    android:textSize="12dp"
+                    android:textColor="@color/white"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center"/>
 
             </LinearLayout>
 
@@ -97,6 +121,7 @@
                 android:id="@+id/viewGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:orientation="vertical">
 
                 <ImageView

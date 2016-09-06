@@ -92,4 +92,7 @@
     </string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_marker">Map</string>
+
+    <color name="lucency">#00000000</color>
+    <color name = "white">#FFFFFFFF</color>
 </resources>
