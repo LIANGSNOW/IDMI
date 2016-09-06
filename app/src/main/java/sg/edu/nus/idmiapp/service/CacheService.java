@@ -22,7 +22,7 @@ public interface CacheService {
     /*
     show image in the ImageView
      */
-    public Bitmap getImageFromLocalCache(String localCachePath, String imageNameWithUrl);
+    Bitmap getImageFromLocalCache(String localCachePath, String imageNameWithUrl);
 
     /*
     check the local cache on activity start

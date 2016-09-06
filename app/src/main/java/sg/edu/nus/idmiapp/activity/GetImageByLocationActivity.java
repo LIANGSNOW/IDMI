@@ -5,15 +5,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,22 +27,14 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+
 import java.util.ArrayList;
-import java.util.Date;
+
 import java.util.HashMap;
-import java.util.List;
 
 import sg.edu.nus.idmiapp.R;
+import sg.edu.nus.idmiapp.dao.ImageDAO;
 import sg.edu.nus.idmiapp.service.CacheService;
 import sg.edu.nus.idmiapp.service.ImageService;
 import sg.edu.nus.idmiapp.service.impl.CacheServiceImpl;
@@ -55,13 +44,10 @@ import sg.edu.nus.idmiapp.utils.UIMessage;
 
 public class GetImageByLocationActivity extends AppCompatActivity implements OnMapReadyCallback {
     String[] urlArray = new String[0];
-    EditText latitude;
-    EditText longitude;
     Bitmap[] bitmap;
     String[] fileArray = new String[0];
-
     private Thread mThread;
-    ArrayList<HashMap<String, String>> imageSetArray;
+    ArrayList<ImageDAO> imageSetArray;
     private GoogleApiClient mGoogleApiClient;
     private static final LocationRequest REQUEST = LocationRequest.create()
             .setInterval(5000)         // 5 seconds
@@ -69,6 +55,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     private CacheService cacheService;
     private ImageService imageService;
+    private ViewGroup imageViewGroup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,12 +75,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
 
             @Override
             public void onMapClick(LatLng position) {
-                Intent intent = new Intent();
-                intent.setClass(GetImageByLocationActivity.this,MarkerActivity.class);
-                intent.putExtra("imageSetArray", imageSetArray);
-                startActivity(intent);
-
-
+                goToMarkerView();
             }
         });
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -114,14 +96,14 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             switch(msg.what) {
                 case UIMessage.MSG_SUCCESS:
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-                    ViewGroup group = (ViewGroup) findViewById(R.id.viewGroup);
+                    imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
                     ImageView[] imageViews = new ImageView[bitmap.length];
                     for (int i = 0; i < imageViews.length; i++) {
                         ImageView imageView = new ImageView(getApplication());
                         imageView.setLayoutParams(new AppBarLayout.LayoutParams(AppBarLayout.LayoutParams.MATCH_PARENT, AppBarLayout.LayoutParams.WRAP_CONTENT));
                         imageViews[i] = imageView;
                         imageView.setImageBitmap(bitmap[i]);
-                        group.addView(imageView);
+                        imageViewGroup.addView(imageView);
                     }
                     break;
 
@@ -132,6 +114,10 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                 case UIMessage.MSG_OUT_OF_CACHE:
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     alertView("You do not have enough space, please clear your cache firstly!");
+                    break;
+                case UIMessage.MSG_NO_IMAGE:
+                    alertView("Please get the image firstly!");
+                    break;
             }
         }
     };
@@ -140,8 +126,8 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     listen to get image button
      */
     public void getImage(View view){
-        ViewGroup group = (ViewGroup) findViewById(R.id.viewGroup);
-        group.removeAllViews();
+        imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
+        imageViewGroup.removeAllViews();
         findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
         mThread = new Thread(getImageThread);
         mThread.start();
@@ -152,12 +138,16 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
      */
     public void clearCache(View view){
         this.cacheService.delCacheFile(this.getApplicationContext().getFilesDir().getAbsolutePath(), -1);
+        this.imageSetArray = null;
+        imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
+        imageViewGroup.removeAllViews();
     }
 
-    /*
-    listen to map button
-     */
-    public void goToMarkerView(View view){
+    public void goToMarkerView(){
+        if(null == this.imageSetArray){
+            mHandler.obtainMessage(UIMessage.MSG_NO_IMAGE).sendToTarget();
+            return ;
+        }
         Intent intent = new Intent();
         intent.setClass(this, MarkerActivity.class);
         intent.putExtra("imageSetArray", this.imageSetArray);
@@ -188,7 +178,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                     int total = imageSetArray.size();
                     ArrayList<String> imageNameArray = new ArrayList<>();
                     for(int i = 0;i < total;i++){
-                        imageNameArray.add((imageSetArray.get(i)).get("imageName"));
+                        imageNameArray.add(imageSetArray.get(i).getImageNameWithCloudStorageURL());
                     }
                     urlArray = new String[total];
                     fileArray = new String[total];
@@ -196,7 +186,6 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                         urlArray[i] = imageNameArray.get(i);
                         String[] temp = urlArray[i].split("/");
                         fileArray[i] = temp[temp.length-1];
-                        System.out.println(fileArray[i]);
                     }
                 }
 
@@ -210,7 +199,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                             cachedFile.add(filePath);
                         } else {
                             unCachedFile.add(urlArray[i]);
-                            unCachedFileSize += Integer.parseInt(imageSetArray.get(i).get("size"));
+                            unCachedFileSize += imageSetArray.get(i).getSize();
                         }
                     }
                     if(unCachedFileSize + cacheService.enquiryFolderSize(new File(getApplicationContext().getFilesDir().getPath())) > Configure.maximumCacheSize){
