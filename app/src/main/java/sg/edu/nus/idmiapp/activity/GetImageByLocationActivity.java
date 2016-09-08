@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -25,6 +26,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.File;
@@ -71,6 +74,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         GoogleMap map = mapFragment.getMap();
+
         map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
             @Override
@@ -83,7 +87,13 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                 .build();
 
         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-
+        RelativeLayout map_button = (RelativeLayout)findViewById(R.id.map_button);
+        map_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToMarkerView();
+            }
+        });
         // clear the local cache images once the application start
         this.cacheService.clearCacheOnStart(this.getApplicationContext().getFilesDir().getPath());
 
@@ -263,6 +273,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
      */
     @Override
     public void onMapReady(GoogleMap map) {
+
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
@@ -273,6 +284,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             Toast.makeText(this, "No Permission", Toast.LENGTH_LONG).show();
         }
     }
+
 
 
 }
