@@ -67,7 +67,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     private ViewGroup imageViewGroup;
     private Double latitude;
     private Double longitude;
-
+    private Boolean isReceivePicture;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,7 +81,8 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        GoogleMap map = mapFragment.getMap();
+
+        /*GoogleMap map = mapFragment.getMap();
 
         map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
@@ -89,7 +90,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             public void onMapClick(LatLng position) {
                 goToMarkerView();
             }
-        });
+        });*/
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .build();
@@ -105,6 +106,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         // clear the local cache images once the application start
         this.cacheService.clearCacheOnStart(this.getApplicationContext().getFilesDir().getPath());
 
+        isReceivePicture = false;
     }
 
 
@@ -121,6 +123,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                         imageViews[i] = imageView;
                         imageView.setImageBitmap(bitmap[i]);
                         imageViewGroup.addView(imageView);
+                        addMarkersOfPicture();
                     }
                     break;
 
@@ -245,6 +248,10 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         alertDialog.show();
     }
 
+    /***
+     * Get current location when the app start using android Gps
+     *
+     */
     public void getCurrentLocation() {
         LocationManager locationManager = (LocationManager) getSystemService(this.LOCATION_SERVICE);
         //获取GPS支持
@@ -265,6 +272,26 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                      }
         latitude = location.getLatitude();
         longitude = location.getLongitude();
+    }
+
+    /***
+     * Add marker of the buildings in the map zoom the marker
+     *
+     */
+    public void addMarkersOfPicture(){
+        isReceivePicture = true;
+        SupportMapFragment mapFragment =
+                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+        GoogleMap map = mapFragment.getMap();
+        for (ImageDAO item : this.imageSetArray) {
+
+            LatLng latLng = new LatLng(Double.parseDouble(item.getLatitude()), Double.parseDouble(item.getLongitude()));
+            map.addMarker(new MarkerOptions().position(latLng).title(item.getImageNameWithCloudStorageURL()));
+
+        }
+        LatLng latLng = new LatLng(Double.parseDouble(this.imageSetArray.get(0).getLatitude()), Double.parseDouble(this.imageSetArray.get(0).getLongitude()));
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
     }
 
 
@@ -308,7 +335,11 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         getCurrentLocation();
         LatLng mylocation = new LatLng(latitude,longitude);
         map.addMarker(new MarkerOptions().position(mylocation).title("Here you are"));
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(mylocation,15));
+        if(!isReceivePicture){
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(mylocation,15));
+        }
+
+
 
     }
 
