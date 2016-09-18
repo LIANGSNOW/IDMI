@@ -1,14 +1,18 @@
 package sg.edu.nus.idmiapp.activity;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.AppBarLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -23,12 +27,14 @@ import android.widget.Toast;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.File;
 
@@ -59,6 +65,8 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     private CacheService cacheService;
     private ImageService imageService;
     private ViewGroup imageViewGroup;
+    private Double latitude;
+    private Double longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +95,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                 .build();
 
         findViewById(R.id.loadingPanel).setVisibility(View.GONE);
-        RelativeLayout map_button = (RelativeLayout)findViewById(R.id.map_button);
+        RelativeLayout map_button = (RelativeLayout) findViewById(R.id.map_button);
         map_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -100,10 +108,9 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     }
 
 
-
     private Handler mHandler = new Handler() {
-        public void handleMessage (Message msg) {
-            switch(msg.what) {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
                 case UIMessage.MSG_SUCCESS:
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
@@ -135,7 +142,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     /*
     listen to get image button
      */
-    public void getImage(View view){
+    public void getImage(View view) {
         imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
         imageViewGroup.removeAllViews();
         findViewById(R.id.loadingPanel).setVisibility(View.VISIBLE);
@@ -146,17 +153,17 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     /*
     listen to clear cache button
      */
-    public void clearCache(View view){
+    public void clearCache(View view) {
         this.cacheService.delCacheFile(this.getApplicationContext().getFilesDir().getAbsolutePath(), -1);
         this.imageSetArray = null;
         imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
         imageViewGroup.removeAllViews();
     }
 
-    public void goToMarkerView(){
-        if(null == this.imageSetArray){
+    public void goToMarkerView() {
+        if (null == this.imageSetArray) {
             mHandler.obtainMessage(UIMessage.MSG_NO_IMAGE).sendToTarget();
-            return ;
+            return;
         }
         Intent intent = new Intent();
         intent.setClass(this, MarkerActivity.class);
@@ -165,13 +172,9 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     }
 
 
-
-
-
     Runnable getImageThread = new Runnable() {
         @Override
-        public void run()
-        {
+        public void run() {
 
             try {
 
@@ -184,24 +187,24 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                 String path = Configure.serverIP + "/IcubeServer/getImageInfoWithCoordinate?latitude=" + Configure.lat + "&longitude=" + Configure.lon;
                 imageSetArray = imageService.getImageSets(path);
 
-                if(null != imageSetArray){
+                if (null != imageSetArray) {
                     int total = imageSetArray.size();
                     ArrayList<String> imageNameArray = new ArrayList<>();
-                    for(int i = 0;i < total;i++){
+                    for (int i = 0; i < total; i++) {
                         imageNameArray.add(imageSetArray.get(i).getImageNameWithCloudStorageURL());
                     }
                     urlArray = new String[total];
                     fileArray = new String[total];
-                    for(int i=0; i < total; i++){
+                    for (int i = 0; i < total; i++) {
                         urlArray[i] = imageNameArray.get(i);
                         String[] temp = urlArray[i].split("/");
-                        fileArray[i] = temp[temp.length-1];
+                        fileArray[i] = temp[temp.length - 1];
                     }
                 }
 
-                if(urlArray.length != 0){
+                if (urlArray.length != 0) {
                     bitmap = new Bitmap[urlArray.length];
-                    for(int i=0;i<urlArray.length;i++) {
+                    for (int i = 0; i < urlArray.length; i++) {
                         // request images from image server
                         File f = new File(getApplicationContext().getFilesDir().getAbsolutePath(), fileArray[i]);
                         String filePath = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + fileArray[i];
@@ -212,10 +215,10 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                             unCachedFileSize += imageSetArray.get(i).getSize();
                         }
                     }
-                    if(unCachedFileSize + cacheService.enquiryFolderSize(new File(getApplicationContext().getFilesDir().getPath())) > Configure.maximumCacheSize){
+                    if (unCachedFileSize + cacheService.enquiryFolderSize(new File(getApplicationContext().getFilesDir().getPath())) > Configure.maximumCacheSize) {
                         mHandler.obtainMessage(UIMessage.MSG_OUT_OF_CACHE).sendToTarget();
-                        return ;
-                    } else{
+                        return;
+                    } else {
                         bitmap = imageService.getBitMaps(cachedFile, unCachedFile, getApplicationContext().getFilesDir().getPath());
                     }
 
@@ -227,7 +230,6 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             }
         }
     };
-
 
 
     private void alertView(String message) {
@@ -243,7 +245,27 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         alertDialog.show();
     }
 
-
+    public void getCurrentLocation() {
+        LocationManager locationManager = (LocationManager) getSystemService(this.LOCATION_SERVICE);
+        //获取GPS支持
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Location location = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
+                 if (location == null) {
+                         //获取NETWORK支持
+                         location = locationManager.getLastKnownLocation(locationManager.NETWORK_PROVIDER);
+                     }
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
+    }
 
 
 
@@ -283,6 +305,11 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         } else {
             Toast.makeText(this, "No Permission", Toast.LENGTH_LONG).show();
         }
+        getCurrentLocation();
+        LatLng mylocation = new LatLng(latitude,longitude);
+        map.addMarker(new MarkerOptions().position(mylocation).title("Here you are"));
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(mylocation,15));
+
     }
 
 
