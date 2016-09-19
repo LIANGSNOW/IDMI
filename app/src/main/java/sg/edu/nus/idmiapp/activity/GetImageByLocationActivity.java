@@ -15,6 +15,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -49,6 +50,7 @@ import sg.edu.nus.idmiapp.service.ImageService;
 import sg.edu.nus.idmiapp.service.impl.CacheServiceImpl;
 import sg.edu.nus.idmiapp.service.impl.ImageServiceImpl;
 import sg.edu.nus.idmiapp.utils.Configure;
+import sg.edu.nus.idmiapp.utils.Permission;
 import sg.edu.nus.idmiapp.utils.UIMessage;
 
 public class GetImageByLocationActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -68,9 +70,16 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     private Double latitude;
     private Double longitude;
     private Boolean isReceivePicture;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            this.alertView("Please allow the location service in the setting");
+            return ;
+        }
 
         //set service
         this.cacheService = new CacheServiceImpl();
@@ -108,6 +117,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
 
         isReceivePicture = false;
     }
+
 
 
     private Handler mHandler = new Handler() {
@@ -252,26 +262,20 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
      * Get current location when the app start using android Gps
      *
      */
-    public void getCurrentLocation() {
+    public Location getCurrentLocation() {
         LocationManager locationManager = (LocationManager) getSystemService(this.LOCATION_SERVICE);
-        //获取GPS支持
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        //check permission
+        if(!Permission.checkLocationPermission(this)){
+            return null;
         }
+        // get gps support
         Location location = locationManager.getLastKnownLocation(locationManager.GPS_PROVIDER);
-                 if (location == null) {
-                         //获取NETWORK支持
-                         location = locationManager.getLastKnownLocation(locationManager.NETWORK_PROVIDER);
-                     }
-        latitude = location.getLatitude();
-        longitude = location.getLongitude();
+        if (location == null) {
+            //get network support
+            location = locationManager.getLastKnownLocation(locationManager.NETWORK_PROVIDER);
+        }
+        return location;
+
     }
 
     /***
@@ -332,11 +336,15 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         } else {
             Toast.makeText(this, "No Permission", Toast.LENGTH_LONG).show();
         }
-        getCurrentLocation();
-        LatLng mylocation = new LatLng(latitude,longitude);
-        map.addMarker(new MarkerOptions().position(mylocation).title("Here you are"));
+        Location location = getCurrentLocation();
+        if(null == location){
+            alertView("please get location permission in system setting");
+            return;
+        }
+        LatLng myLocation = new LatLng(location.getLatitude(),location.getLongitude());
+        map.addMarker(new MarkerOptions().position(myLocation).title("Here you are"));
         if(!isReceivePicture){
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(mylocation,15));
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,15));
         }
 
 
