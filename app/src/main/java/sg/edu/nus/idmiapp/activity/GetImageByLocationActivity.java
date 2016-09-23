@@ -42,6 +42,8 @@ import java.io.File;
 import java.util.ArrayList;
 
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import sg.edu.nus.idmiapp.R;
 import sg.edu.nus.idmiapp.dao.ImageDAO;
@@ -69,7 +71,9 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     private ViewGroup imageViewGroup;
     private Double latitude;
     private Double longitude;
-    private Boolean isReceivePicture;
+   // private Boolean isReceivePicture;
+    private Timer timer;
+    private TimerTask timertask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +119,38 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         // clear the local cache images once the application start
         this.cacheService.clearCacheOnStart(this.getApplicationContext().getFilesDir().getPath());
 
-        isReceivePicture = false;
+      //  isReceivePicture = false;
+       /* final int WHAT = 102;
+        final Handler handler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
+                    case WHAT:
+                        SupportMapFragment mapFragment =
+                                (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+                        //mapFragment.getMapAsync(this);
+                        GoogleMap map = mapFragment.getMap();
+                        break;
+                }
+            }
+        };*/
+
+        timertask = new TimerTask() {
+            @Override
+            public void run() {
+                Message message = new Message();
+                //message.what = WHAT;
+                message.obj = System.currentTimeMillis();
+            //   handler.sendMessage(message);
+                mHandler.obtainMessage(UIMessage.MSG_TIMER).sendToTarget();
+            }
+        };
+
+        timer = new Timer();
+        // 参数：
+        // 1000，延时1秒后执行。
+        // 2000，每隔2秒执行1次task。
+        timer.schedule(timertask, 1000, 2000);
     }
 
 
@@ -133,7 +168,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                         imageViews[i] = imageView;
                         imageView.setImageBitmap(bitmap[i]);
                         imageViewGroup.addView(imageView);
-                        addMarkersOfPicture();
+                       // addMarkersOfPicture();
                     }
                     break;
 
@@ -147,6 +182,12 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                     break;
                 case UIMessage.MSG_NO_IMAGE:
                     alertView("Please get the image firstly!");
+                    break;
+                case UIMessage.MSG_TIMER:
+                    SupportMapFragment mapFragment =
+                            (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+                    //mapFragment.getMapAsync(this);
+                    GoogleMap map = mapFragment.getMap();
                     break;
             }
         }
@@ -283,7 +324,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
      *
      */
     public void addMarkersOfPicture(){
-        isReceivePicture = true;
+     //   isReceivePicture = true;
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -343,9 +384,9 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         }
         LatLng myLocation = new LatLng(location.getLatitude(),location.getLongitude());
         map.addMarker(new MarkerOptions().position(myLocation).title("Here you are"));
-        if(!isReceivePicture){
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,15));
-        }
+
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,15));
+
 
 
 
