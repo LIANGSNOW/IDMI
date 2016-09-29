@@ -86,10 +86,17 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-       /* if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+      /*  if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             this.alertView("Please allow the location service in the setting");
-            return ;
+
+
+            ActivityCompat.requestPermissions( this, new String[] {  android.Manifest.permission.ACCESS_COARSE_LOCATION  },
+                    0 );
+            ActivityCompat.requestPermissions( this, new String[] {  android.Manifest.permission.ACCESS_FINE_LOCATION  },
+                    1 );
+
+            //return ;
         }*/
 
         //set service
@@ -160,9 +167,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         };
 
         timer = new Timer();
-        // 参数：
-        // 1000，延时1秒后执行。
-        // 2000，每隔2秒执行1次task。
+
         timer.schedule(timertask, 1000, 2000);
 
         mLocationRequest = LocationRequest.create()
@@ -177,6 +182,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case UIMessage.MSG_SUCCESS:
+
                     findViewById(R.id.loadingPanel).setVisibility(View.GONE);
                     imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
                     ImageView[] imageViews = new ImageView[bitmap.length];
@@ -405,7 +411,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         } else {
             Toast.makeText(this, "No Permission", Toast.LENGTH_LONG).show();
         }
-        Location location = getCurrentLocation();
+       /* Location location = getCurrentLocation();
         if(null == location){
             alertView("please get location permission in system setting");
             return;
@@ -469,17 +475,27 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     @Override
 
     public void onConnected(Bundle bundle) {
-        if(!Permission.checkLocationPermission(this)){
-
+      /*  if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions( this, new String[] {  android.Manifest.permission.ACCESS_FINE_LOCATION  },
+                    1 );
+            ActivityCompat.requestPermissions( this, new String[] {  android.Manifest.permission.ACCESS_COARSE_LOCATION  },
+                    0 );
+            return ;
+        }*/
+        if(Permission.checkLocationPermission(this)){
+            return;
         }
+
+
         Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
         if (location == null) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-        }
-        else {
+        } else {
             handleNewLocation(location);
         }
+
     }
 
     /**
@@ -503,5 +519,49 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         handleNewLocation(location);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case  UIMessage.MSG_ACCESS_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Log.i("permission","grant1");
+
+
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+            case UIMessage.MSG_ACCESS_COARSE_LOCATION:{
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Log.i("permission","grant2");
+
+
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
 
 }
