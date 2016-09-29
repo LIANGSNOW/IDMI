@@ -25,7 +25,9 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -55,7 +57,10 @@ import sg.edu.nus.idmiapp.utils.Configure;
 import sg.edu.nus.idmiapp.utils.Permission;
 import sg.edu.nus.idmiapp.utils.UIMessage;
 
-public class GetImageByLocationActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class GetImageByLocationActivity extends AppCompatActivity implements OnMapReadyCallback,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener {
     String[] urlArray = new String[0];
     Bitmap[] bitmap;
     String[] fileArray = new String[0];
@@ -74,16 +79,18 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
    // private Boolean isReceivePicture;
     private Timer timer;
     private TimerTask timertask;
+    private GoogleMap map;
+    private LocationRequest mLocationRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+       /* if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             this.alertView("Please allow the location service in the setting");
             return ;
-        }
+        }*/
 
         //set service
         this.cacheService = new CacheServiceImpl();
@@ -105,6 +112,8 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             }
         });*/
         mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
 
@@ -117,7 +126,11 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             }
         });
         // clear the local cache images once the application start
-        this.cacheService.clearCacheOnStart(this.getApplicationContext().getFilesDir().getPath());
+        //check file path
+        if(this.getApplicationContext().getFilesDir()!= null){
+            this.cacheService.clearCacheOnStart(this.getApplicationContext().getFilesDir().getPath());
+        }
+
 
       //  isReceivePicture = false;
        /* final int WHAT = 102;
@@ -151,6 +164,11 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         // 1000，延时1秒后执行。
         // 2000，每隔2秒执行1次task。
         timer.schedule(timertask, 1000, 2000);
+
+        mLocationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(10 * 1000)        // 10 seconds, in milliseconds
+                .setFastestInterval(1 * 1000); // 1 second, in milliseconds
     }
 
 
@@ -184,10 +202,15 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
                     alertView("Please get the image firstly!");
                     break;
                 case UIMessage.MSG_TIMER:
-                    SupportMapFragment mapFragment =
+                  /*  SupportMapFragment mapFragment =
                             (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
                     //mapFragment.getMapAsync(this);
                     GoogleMap map = mapFragment.getMap();
+                    Location location = getCurrentLocation();
+                    LatLng myLocation = new LatLng(location.getLatitude(),location.getLongitude());
+                    //map.addMarker(new MarkerOptions().position(myLocation).title("Here you are"));
+                    Log.i("latitude",location.getLatitude()+"");
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,15));*/
                     break;
             }
         }
@@ -208,7 +231,9 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
     listen to clear cache button
      */
     public void clearCache(View view) {
-        this.cacheService.delCacheFile(this.getApplicationContext().getFilesDir().getAbsolutePath(), -1);
+        if(this.getApplicationContext().getFilesDir()!= null) {
+            this.cacheService.delCacheFile(this.getApplicationContext().getFilesDir().getAbsolutePath(), -1);
+        }
         this.imageSetArray = null;
         imageViewGroup = (ViewGroup) findViewById(R.id.viewGroup);
         imageViewGroup.removeAllViews();
@@ -258,15 +283,18 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
 
                 if (urlArray.length != 0) {
                     bitmap = new Bitmap[urlArray.length];
-                    for (int i = 0; i < urlArray.length; i++) {
-                        // request images from image server
-                        File f = new File(getApplicationContext().getFilesDir().getAbsolutePath(), fileArray[i]);
-                        String filePath = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + fileArray[i];
-                        if (f.exists()) {
-                            cachedFile.add(filePath);
-                        } else {
-                            unCachedFile.add(urlArray[i]);
-                            unCachedFileSize += imageSetArray.get(i).getSize();
+                    if(getApplicationContext().getFilesDir()!= null) {
+                        for (int i = 0; i < urlArray.length; i++) {
+                            // request images from image server
+
+                            File f = new File(getApplicationContext().getFilesDir().getAbsolutePath(), fileArray[i]);
+                            String filePath = getApplicationContext().getFilesDir().getAbsolutePath() + "/" + fileArray[i];
+                            if (f.exists()) {
+                                cachedFile.add(filePath);
+                            } else {
+                                unCachedFile.add(urlArray[i]);
+                                unCachedFileSize += imageSetArray.get(i).getSize();
+                            }
                         }
                     }
                     if (unCachedFileSize + cacheService.enquiryFolderSize(new File(getApplicationContext().getFilesDir().getPath())) > Configure.maximumCacheSize) {
@@ -328,7 +356,7 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        GoogleMap map = mapFragment.getMap();
+        map = mapFragment.getMap();
         for (ImageDAO item : this.imageSetArray) {
 
             LatLng latLng = new LatLng(Double.parseDouble(item.getLatitude()), Double.parseDouble(item.getLongitude()));
@@ -382,16 +410,98 @@ public class GetImageByLocationActivity extends AppCompatActivity implements OnM
             alertView("please get location permission in system setting");
             return;
         }
-        LatLng myLocation = new LatLng(location.getLatitude(),location.getLongitude());
-        map.addMarker(new MarkerOptions().position(myLocation).title("Here you are"));
-
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,15));
-
-
+       /* LatLng myLocation = new LatLng(location.getLatitude(),location.getLongitude());
+        //map.addMarker(new MarkerOptions().position(myLocation).title("Here you are"));
+        Log.i("latitude",location.getLatitude()+"");
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,15));*/
 
 
     }
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setUpMapIfNeeded();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        if (mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
+        }
+    }
+
+   private void setUpMapIfNeeded() {
+        // Do a null check to confirm that we have not already instantiated the map.
+        if (map == null) {
+            // Try to obtain the map from the SupportMapFragment.
+            map = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))
+                    .getMap();
+            // Check if we were successful in obtaining the map.
+
+        }
+    }
+  private void handleNewLocation(Location location) {
+
+      double currentLatitude = location.getLatitude();
+      double currentLongitude = location.getLongitude();
+
+      LatLng latLng = new LatLng(currentLatitude, currentLongitude);
+
+      /*MarkerOptions options = new MarkerOptions()
+              .position(latLng)
+              .title("I am here!");
+      map.addMarker(options);*/
+      map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,15));
+      Log.i("latitude",location.getLatitude()+"");
+  }
+
+
+
+    /**
+     * Callback called when connected to GCore. Implementation of {@link GoogleApiClient.ConnectionCallbacks}.
+     */
+    @Override
+
+    public void onConnected(Bundle bundle) {
+        if(!Permission.checkLocationPermission(this)){
+
+        }
+        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+        if (location == null) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        }
+        else {
+            handleNewLocation(location);
+        }
+    }
+
+    /**
+     * Callback called when disconnected from GCore. Implementation of {@link GoogleApiClient.ConnectionCallbacks}.
+     */
+    @Override
+    public void onConnectionSuspended(int cause) {
+        // Do nothing
+    }
+
+    /**
+     * Implementation of {@link GoogleApiClient.OnConnectionFailedListener}.
+     */
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        // Do nothing
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        handleNewLocation(location);
+    }
 
 
 }
